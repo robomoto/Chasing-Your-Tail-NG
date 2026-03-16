@@ -24,8 +24,8 @@
 | 2 | GPS module | u-blox NEO-M8N (GY-NEO8MV2 breakout) | UART1: GPIO 43 (TX), GPIO 44 (RX) | $8 |
 | 3 | SD card breakout | Generic microSD SPI module (3.3V native, no level shifter) | SPI: GPIO 10 (CS), 11 (MOSI), 12 (CLK), 13 (MISO) | $2 |
 | 4 | microSD card | 8GB+ Class 10 | In SD breakout | $4 |
-| 5 | LoRa module | SX1262-based (EBYTE E22-900M30S or Heltec HT-RA62) | SPI shared: GPIO 9 (CS), 8 (RST), 7 (DIO1/IRQ), 6 (BUSY) | $7 |
-| 6 | 915 MHz antenna | 1/4 wave SMA whip (~8cm) | SMA on SX1262 | $3 |
+| 5 | Sub-GHz module | CC1101-based (EBYTE E07-900M10S or generic) | SPI shared: GPIO 9 (CS), 8 (GDO0/IRQ), 7 (GDO2), 6 (optional RST) | $6 |
+| 6 | 433 MHz antenna | 1/4 wave SMA whip (~17cm) | SMA on CC1101 | $3 |
 | 7 | 2.4 GHz antenna | External SMA whip + U.FL pigtail | Solder to PCB antenna feed | $3 |
 | 8 | Battery | 18650 Samsung 30Q (3000mAh) + spring holder w/ JST-PH 2.0 | JST-PH to battery connector | $5 |
 | 9 | Buzzer | Passive piezo (3.3V) | GPIO 1 (PWM) | $1 |
@@ -38,7 +38,7 @@
 
 | Build | What's Removed | Cost |
 |-------|---------------|------|
-| Without LoRa | Remove items 5, 6 | ~$48 |
+| Without CC1101 | Remove items 5, 6 | ~$49 |
 | Bare minimum | Remove LoRa, ext antenna, buzzer, extra buttons | ~$38 |
 
 ## GPIO Pin Map
@@ -72,7 +72,7 @@
 | ESP32-S3 WiFi promiscuous RX | 130 | 75% | 97.5 |
 | ESP32-S3 BLE scanning | 100 | 15% | 15 |
 | ESP32-S3 CPU (dual-core, 240MHz) | 50 | 100% | 50 |
-| SX1262 LoRa RX (continuous) | 7 | 100% | 7 |
+| CC1101 sub-GHz RX (continuous) | 15 | 100% | 15 |
 | GPS module (NEO-M8N) | 30 | 50% | 15 |
 | TFT display (backlight on) | 25 | 40% | 10 |
 | SD card (SPI writes) | 40 | 2% | 0.8 |
@@ -88,14 +88,14 @@
 | 18650 (optimized) | 3000mAh | ~15h+ | Display auto-off, GPS 60s cycle, CPU 160MHz idle |
 | LiPo 2000mAh (compact) | 2000mAh | ~9h | Smaller form factor option |
 
-LoRa module adds only 7mA — essentially free in power terms.
+CC1101 draws ~15mA in RX — minimal power impact.
 
 ## Antenna Strategy
 
 | Band | Antenna | Notes |
 |------|---------|-------|
 | 2.4 GHz (WiFi/BLE) | External SMA whip via U.FL pigtail ($3) | Improves BLE tracker range to ~30-40m vs ~10-20m with PCB antenna |
-| 915 MHz (LoRa) | 1/4 wave SMA whip ~8cm ($3) | On SX1262 module. LoRa range: ~500m-2km urban |
+| 433 MHz (TPMS/sub-GHz) | 1/4 wave SMA whip ~17cm ($3) | On CC1101 module. TPMS range: ~30-50m |
 | GPS (1575 MHz) | Ceramic patch (included with NEO-M8N) | Position on top of enclosure, facing sky |
 
 Two SMA bulkhead connectors on the enclosure (top edge). Both antennas protrude upward.
@@ -108,8 +108,8 @@ Two SMA bulkhead connectors on the enclosure (top edge). Both antennas protrude 
 | BLE tracker detection (AirTag, SmartTag, Tile) | ESP32 BLE GAP scan |
 | Remote ID (BLE) | ESP32 BLE scan for ASTM F3411 advertisements |
 | Remote ID (WiFi NAN) | ESP32 promiscuous mode captures NAN action frames |
-| LoRa/Meshtastic detection | SX1262 module, decode packet headers for node IDs |
-| ELRS/Crossfire drone control | SX1262 detects LoRa signals on 868/915 MHz |
+| TPMS vehicle tracking | CC1101 module, decode 315/433 MHz OOK/FSK tire sensors |
+| Sub-GHz device detection | CC1101 decodes key fobs, security sensors, simple OOK protocols |
 | GPS location tagging | UART GPS module |
 | Session logging | CSV to SD card |
 | Real-time alerts | TFT display + buzzer |
@@ -118,7 +118,8 @@ Two SMA bulkhead connectors on the enclosure (top edge). Both antennas protrude 
 ## What the Handheld CANNOT Do (Base Station Only)
 
 - 5 GHz WiFi monitoring
-- Sub-GHz protocol decoding via rtl_433 (TPMS, analog bugs, key fobs)
+- Full rtl_433 protocol decoding (200+ protocols — handheld CC1101 covers TPMS + basic OOK/FSK only)
+- LoRa/Meshtastic decoding (would need SX1262 — swapped for CC1101)
 - ADS-B aircraft tracking
 - RF wideband sweep
 - WiGLE API queries
