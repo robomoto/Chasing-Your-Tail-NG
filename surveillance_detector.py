@@ -65,8 +65,30 @@ class SurveillanceDetector:
         
         self.appearances.append(appearance)
         self.device_history[mac].append(appearance)
-        
-        logger.debug(f"Recorded appearance: {mac} at {location_id}")
+
+    def add_appearance(self, appearance) -> None:
+        """Add a new-style DeviceAppearance (from scanners.base_scanner).
+
+        Supports both the old DeviceAppearance (this module) and new-style
+        DeviceAppearance (scanners.base_scanner) which uses device_id as key.
+        """
+        # Extract device_id — new-style has it directly, old-style uses mac
+        device_id = getattr(appearance, 'device_id', None) or getattr(appearance, 'mac', None)
+        if device_id is None:
+            return
+
+        # Wrap into old-style DeviceAppearance for compatibility with existing scoring
+        old_appearance = DeviceAppearance(
+            mac=getattr(appearance, 'mac', None) or device_id,
+            timestamp=appearance.timestamp,
+            location_id=appearance.location_id,
+            ssids_probed=getattr(appearance, 'ssids_probed', []),
+            signal_strength=getattr(appearance, 'signal_strength', None),
+            device_type=getattr(appearance, 'device_type', None)
+        )
+
+        self.appearances.append(old_appearance)
+        self.device_history[device_id].append(old_appearance)
     
     def analyze_surveillance_patterns(self) -> List[SuspiciousDevice]:
         """Analyze all devices for surveillance patterns"""

@@ -48,10 +48,18 @@ class DeviceAppearance:
 
 
 class BaseScanner(ABC):
-    """Abstract base class for all scanner threads. STUB."""
+    """Abstract base class for all scanner threads."""
 
     def __init__(self, config: dict, output_queue: Queue, location_id: str = "unknown"):
-        raise NotImplementedError("BaseScanner not yet implemented")
+        self.config = config
+        self._output_queue = output_queue
+        self.location_id = location_id
+        self._state = ScannerState.STOPPED
+        self._thread: Optional[threading.Thread] = None
+        self._stop_event = threading.Event()
+        self._pause_event = threading.Event()
+        self._pause_event.set()  # not paused by default
+        self._logger = logging.getLogger(f"{__name__}.{type(self).__name__}")
 
     @property
     @abstractmethod
@@ -61,20 +69,42 @@ class BaseScanner(ABC):
     def _scan_loop(self) -> None: ...
 
     def start(self) -> None:
-        raise NotImplementedError
+        if self._state != ScannerState.STOPPED:
+            return
+        self._state = ScannerState.STARTING
+        self._stop_event.clear()
+        self._pause_event.set()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
 
     def stop(self) -> None:
-        raise NotImplementedError
+        self._stop_event.set()
+        self._pause_event.set()  # unblock if paused
+        if self._thread is not None:
+            self._thread.join(timeout=5.0)
+        self._state = ScannerState.STOPPED
 
     def pause(self) -> None:
-        raise NotImplementedError
+        self._pause_event.clear()
+        self._state = ScannerState.PAUSED
 
     def resume(self) -> None:
-        raise NotImplementedError
+        self._pause_event.set()
+        self._state = ScannerState.RUNNING
+
+    def _run(self) -> None:
+        try:
+            self._state = ScannerState.RUNNING
+            self._scan_loop()
+        except Exception:
+            self._logger.exception("Scanner %s crashed", self.scanner_name)
+            self._state = ScannerState.ERROR
+            return
+        self._state = ScannerState.STOPPED
 
     @property
     def state(self) -> ScannerState:
-        raise NotImplementedError
+        return self._state
 
     def _emit(self, appearance: DeviceAppearance) -> None:
-        raise NotImplementedError
+        self._output_queue.put(appearance)

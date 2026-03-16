@@ -129,12 +129,10 @@ def test_wifi_scanner_emits_device_appearances(populated_kismet_db, sample_confi
 
     # Run a single scan cycle by calling internal methods directly.
     # The real _scan_loop polls in a thread; here we invoke the logic once.
-    scanner._stop_event = __import__("threading").Event()
-    scanner._stop_event.set()  # Will cause the loop to exit after one iteration
-
-    # Patch _stop_event.wait to not actually sleep
+    # Let the loop enter, but have wait() return True to exit after one iteration
     with patch.object(scanner._stop_event, "wait", return_value=True):
-        scanner._scan_loop()
+        with patch.object(scanner._stop_event, "is_set", side_effect=[False, True]):
+            scanner._scan_loop()
 
     appearances = []
     while not q.empty():
@@ -162,11 +160,9 @@ def test_wifi_scanner_extracts_ssids(populated_kismet_db, sample_config):
     q = Queue()
     scanner = WiFiScanner(config=config, output_queue=q)
 
-    scanner._stop_event = __import__("threading").Event()
-    scanner._stop_event.set()
-
     with patch.object(scanner._stop_event, "wait", return_value=True):
-        scanner._scan_loop()
+        with patch.object(scanner._stop_event, "is_set", side_effect=[False, True]):
+            scanner._scan_loop()
 
     appearances = []
     while not q.empty():
@@ -196,11 +192,9 @@ def test_wifi_scanner_handles_malformed_json(populated_kismet_db, sample_config)
     q = Queue()
     scanner = WiFiScanner(config=config, output_queue=q)
 
-    scanner._stop_event = __import__("threading").Event()
-    scanner._stop_event.set()
-
     with patch.object(scanner._stop_event, "wait", return_value=True):
-        scanner._scan_loop()
+        with patch.object(scanner._stop_event, "is_set", side_effect=[False, True]):
+            scanner._scan_loop()
 
     appearances = []
     while not q.empty():
