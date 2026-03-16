@@ -17,6 +17,9 @@ Planning documentation for Chasing Your Tail - Next Generation development.
 - [Firmware Architecture](esp32-port/firmware-architecture.md) - Task model, memory layout, data flow
 - [Feature Parity Matrix](esp32-port/feature-parity.md) - What ports, what doesn't, what changes
 
+### TODO
+- [Base Station TODO](TODO-base-station.md) - Remaining GUI, reports, daily summary, hardware testing, docs
+
 ### Specialist Reviews
 - [UI Design Review](reviews/ui-review.md) - Dashboard layouts, handheld screens, color system, discreet alerts
 - [UX Design Review](reviews/ux-review.md) - User personas, critical flows, onboarding, alert fatigue, safety
