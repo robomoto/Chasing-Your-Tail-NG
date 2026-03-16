@@ -866,16 +866,17 @@ def load_appearances_from_kismet(db_path: str, detector: SurveillanceDetector,
                 
                 # Extract SSIDs from device JSON
                 ssids_probed = []
-                try:
-                    device_data = json.loads(device_json)
-                    dot11_device = device_data.get('dot11.device', {})
-                    if dot11_device:
-                        probe_record = dot11_device.get('dot11.device.last_probed_ssid_record', {})
-                        ssid = probe_record.get('dot11.probedssid.ssid')
-                        if ssid:
-                            ssids_probed = [ssid]
-                except (json.JSONDecodeError, KeyError):
-                    pass
+                if device_json is not None:
+                    try:
+                        device_data = json.loads(device_json)
+                        dot11_device = device_data.get('dot11.device', {})
+                        if dot11_device:
+                            probe_record = dot11_device.get('dot11.device.last_probed_ssid_record', {})
+                            ssid = probe_record.get('dot11.probedssid.ssid')
+                            if ssid:
+                                ssids_probed = [ssid]
+                    except (json.JSONDecodeError, KeyError):
+                        pass
                 
                 detector.add_device_appearance(
                     mac=mac,

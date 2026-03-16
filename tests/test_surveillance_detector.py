@@ -591,7 +591,6 @@ class TestFormatDetailedDeviceAnalysis:
 # ---------------------------------------------------------------------------
 
 class TestLoadAppearancesFromKismet:
-    @pytest.mark.xfail(reason="Known bug: load_appearances_from_kismet crashes on json.loads(None) for NULL device rows")
     def test_load_from_populated_db(self, populated_kismet_db):
         det = _make_detector()
         count = load_appearances_from_kismet(populated_kismet_db, det, "test_loc")
@@ -620,7 +619,6 @@ class TestLoadAppearancesFromKismet:
         assert count == 0
         assert len(det.appearances) == 0
 
-    @pytest.mark.xfail(reason="Known bug: load_appearances_from_kismet crashes on json.loads(None) for NULL device rows")
     def test_invalid_json_handled(self, populated_kismet_db):
         """Row with '{invalid json' should not crash and should yield empty ssids."""
         det = _make_detector()
@@ -629,7 +627,6 @@ class TestLoadAppearancesFromKismet:
         assert len(ee04) == 1
         assert ee04[0].ssids_probed == []
 
-    @pytest.mark.xfail(reason="Known bug: load_appearances_from_kismet crashes on json.loads(None) for NULL device rows")
     def test_null_device_json_handled(self, populated_kismet_db):
         """Row with NULL device field should not crash."""
         det = _make_detector()
@@ -657,7 +654,6 @@ class TestLoadAppearancesFromKismet:
         load_appearances_from_kismet(db_path, det, "my_loc")
         assert all(a.location_id == "my_loc" for a in det.appearances)
 
-    @pytest.mark.xfail(reason="Known bug: load_appearances_from_kismet crashes on json.loads(None) for NULL device rows")
     def test_empty_ssid_not_included(self, populated_kismet_db):
         """Row with empty string SSID should not produce a non-empty ssids_probed."""
         det = _make_detector()

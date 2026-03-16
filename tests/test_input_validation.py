@@ -76,7 +76,6 @@ class TestValidateSSID:
     def test_control_characters(self):
         assert InputValidator.validate_ssid("test\x01ssid") is False
 
-    @pytest.mark.xfail(reason="Known bug: DEL (0x7F) is not in printable ASCII range but passes SSID_PATTERN regex")
     def test_del_character_rejected(self):
         assert InputValidator.validate_ssid("\x7f") is False
 
@@ -203,7 +202,6 @@ class TestSanitizeString:
         result = InputValidator.sanitize_string("SELECT * FROM users")
         assert "SELECT" not in result
 
-    @pytest.mark.xfail(reason="Known bug: SQL keyword stripping removes 'DROP' from words like 'DROPLET'")
     def test_sql_keyword_stripping_false_positive(self):
         """sanitize_string strips 'DROP' from 'DROPLET' because it uses
         substring matching rather than whole-word matching."""
