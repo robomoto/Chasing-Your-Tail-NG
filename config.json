@@ -81,5 +81,23 @@
     "cross_source_multiplier": 1.5,
     "tpms_wifi_multiplier": 2.0,
     "drone_repeat_multiplier": 2.0
-  }
+  },
+  "alert_formatting": {
+    "default_mode": "daily_summary",
+    "tier_boundaries": [0.3, 0.5, 0.7, 0.85]
+  },
+  "alert_filter": {
+    "min_score": 0.7,
+    "require_corroboration": false,
+    "familiar_devices_path": "familiar_devices.json"
+  },
+  "data_retention": {
+    "unflagged_ttl_hours": 48,
+    "flagged_ttl_days": 90,
+    "cleanup_interval_hours": 6
+  },
+  "stealth_mode": {
+    "enabled": false
+  },
+  "monitoring_mode": "self"
 }

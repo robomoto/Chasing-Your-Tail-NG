@@ -525,12 +525,13 @@ class KMLExporter:
             return "<p>No devices detected</p>"
         
         html = "<ul>"
-        suspicious_macs = {device.mac for device in suspicious_devices}
-        
+        suspicious_macs = {getattr(device, 'device_id', device.mac) for device in suspicious_devices}
+
         # Show suspicious devices first
         for device in suspicious_devices:
+            device_label = getattr(device, 'device_id', device.mac)
             persistence_emoji = "🚨" if device.persistence_score > 0.8 else "⚠️" if device.persistence_score > 0.6 else "🟡"
-            html += f"<li><b>{persistence_emoji} {device.mac}</b> - Persistence Score: {device.persistence_score:.2f}</li>"
+            html += f"<li><b>{persistence_emoji} {device_label}</b> - Persistence Score: {device.persistence_score:.2f}</li>"
         
         # Show remaining devices
         normal_devices = [mac for mac in all_devices if mac not in suspicious_macs]
@@ -552,7 +553,8 @@ class KMLExporter:
         html += "<ul>"
         
         for device in suspicious_devices:
-            html += f"<li><b>{device.mac}</b> (Score: {device.persistence_score:.2f})<ul>"
+            device_label = getattr(device, 'device_id', device.mac)
+            html += f"<li><b>{device_label}</b> (Score: {device.persistence_score:.2f})<ul>"
             for reason in device.reasons[:3]:  # Top 3 reasons
                 html += f"<li>{reason}</li>"
             html += "</ul></li>"
@@ -582,8 +584,9 @@ class KMLExporter:
         }
         
         for device in devices:
-            if device.mac in multi_location_devices:
-                locations = multi_location_devices[device.mac]
+            device_label = getattr(device, 'device_id', device.mac)
+            if device_label in multi_location_devices:
+                locations = multi_location_devices[device_label]
                 
                 # Create enhanced tracking path with temporal data
                 path_coordinates = []
@@ -599,12 +602,12 @@ class KMLExporter:
                     duration = device.last_seen - device.first_seen
                     device_path = f'''
     <Placemark>
-        <name>[{threat_level}] Tracking Path: {device.mac}</name>
+        <name>[{threat_level}] Tracking Path: {device_label}</name>
         <description>
             <![CDATA[
             <h3>🎯 DEVICE TRACKING INTELLIGENCE</h3>
             <table border="1" cellpadding="5">
-            <tr><td><b>MAC Address</b></td><td>{device.mac}</td></tr>
+            <tr><td><b>Device ID</b></td><td>{device_label}</td></tr>
             <tr><td><b>Persistence Classification</b></td><td>{threat_level} PERSISTENCE</td></tr>
             <tr><td><b>Persistence Score</b></td><td>{device.persistence_score:.3f}/1.000</td></tr>
             <tr><td><b>Surveillance Duration</b></td><td>{duration.total_seconds()/3600:.1f} hours</td></tr>
@@ -635,18 +638,18 @@ class KMLExporter:
                 
                 # Enhanced markers for each location
                 for session in gps_tracker.location_sessions:
-                    if session.session_id in locations and device.mac in session.devices_seen:
+                    if session.session_id in locations and device_label in session.devices_seen:
                         # Find device appearances at this location
                         appearances_here = [a for a in device.appearances if a.location_id == session.session_id]
                         
                         device_marker = f'''
     <Placemark>
-        <name>[{threat_level}] {device.mac} @ {session.session_id}</name>
+        <name>[{threat_level}] {device_label} @ {session.session_id}</name>
         <description>
             <![CDATA[
             <h3>📱 DEVICE DETECTION EVENT</h3>
             <table border="1" cellpadding="5">
-            <tr><td><b>Device MAC</b></td><td>{device.mac}</td></tr>
+            <tr><td><b>Device ID</b></td><td>{device_label}</td></tr>
             <tr><td><b>Location</b></td><td>{session.session_id}</td></tr>
             <tr><td><b>Persistence Level</b></td><td>{threat_level}</td></tr>
             <tr><td><b>Detection Time</b></td><td>{datetime.fromtimestamp(session.start_time).strftime('%Y-%m-%d %H:%M:%S')}</td></tr>
@@ -764,7 +767,7 @@ class KMLExporter:
             <p><b>Implications:</b> Possible workplace surveillance or professional monitoring</p>
             <h4>Affected Devices:</h4>
             <ul>
-            {chr(10).join(f'<li>{device.mac} (Score: {device.persistence_score:.2f})</li>' for device in work_hour_devices)}
+            {chr(10).join(f'<li>{getattr(device, "device_id", device.mac)} (Score: {device.persistence_score:.2f})</li>' for device in work_hour_devices)}
             </ul>
             ]]>
         </description>
@@ -786,7 +789,7 @@ class KMLExporter:
             <p><b>Implications:</b> Possible stalking or personal surveillance</p>
             <h4>Affected Devices:</h4>
             <ul>
-            {chr(10).join(f'<li>{device.mac} (Score: {device.persistence_score:.2f})</li>' for device in off_hour_devices)}
+            {chr(10).join(f'<li>{getattr(device, "device_id", device.mac)} (Score: {device.persistence_score:.2f})</li>' for device in off_hour_devices)}
             </ul>
             ]]>
         </description>
@@ -801,14 +804,15 @@ class KMLExporter:
         """Generate circle coordinates for KML polygon"""
         import math
         
-        # Convert radius to degrees (approximate)
-        radius_deg = radius_meters / 111000  # rough conversion
-        
+        # Convert radius to degrees with latitude correction
+        radius_lat_deg = radius_meters / 111000
+        radius_lon_deg = radius_meters / (111000 * math.cos(math.radians(center_lat)))
+
         coordinates = []
         for i in range(37):  # 36 points + close the circle
             angle = (i * 10) * math.pi / 180  # 10 degrees per point
-            lon = center_lon + radius_deg * math.cos(angle)
-            lat = center_lat + radius_deg * math.sin(angle)
+            lon = center_lon + radius_lon_deg * math.cos(angle)
+            lat = center_lat + radius_lat_deg * math.sin(angle)
             coordinates.append(f"{lon},{lat},0")
         
         return " ".join(coordinates)
@@ -891,7 +895,14 @@ class KMLExporter:
             <width>3</width>
         </LineStyle>
     </Style>
-    
+
+    <Style id="lowDevicePathStyle">
+        <LineStyle>
+            <color>ff00ff00</color>
+            <width>2</width>
+        </LineStyle>
+    </Style>
+
     <Style id="devicePathStyle">
         <LineStyle>
             <color>7f00ffff</color>
@@ -923,7 +934,15 @@ class KMLExporter:
             <scale>1.4</scale>
         </IconStyle>
     </Style>
-    
+
+    <Style id="lowDeviceStyle">
+        <IconStyle>
+            <color>ff00ff00</color>
+            <Icon><href>http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png</href></Icon>
+            <scale>1.1</scale>
+        </IconStyle>
+    </Style>
+
     <Style id="suspiciousDeviceStyle">
         <IconStyle>
             <color>ff0000ff</color>
