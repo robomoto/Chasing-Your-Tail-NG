@@ -23,5 +23,63 @@
     "lat_max": 37.0,
     "lon_min": -114.8,
     "lon_max": -109.0
+  },
+  "scanners": {
+    "wifi": {
+      "enabled": true,
+      "check_interval": 60
+    },
+    "ble": {
+      "enabled": false,
+      "scan_duration": 10,
+      "scan_interval": 60,
+      "tracker_types": null
+    },
+    "bt_classic": {
+      "enabled": false,
+      "inquiry_duration": 8,
+      "inquiry_interval": 120
+    },
+    "sdr": {
+      "enabled": false,
+      "rtl_433_path": "/usr/bin/rtl_433",
+      "device_index": 0,
+      "gain": 40
+    },
+    "lora": {
+      "enabled": false,
+      "serial_port": null,
+      "poll_interval": 5
+    },
+    "drone": {
+      "enabled": false,
+      "ssid_patterns": ["DJI-*", "TELLO-*", "Skydio-*", "ANAFI-*", "Autel-*", "PARROT-*"],
+      "ble_scan_duration": 10,
+      "scan_interval": 30
+    },
+    "adsb": {
+      "enabled": false,
+      "dump1090_url": "http://localhost:8080",
+      "poll_interval": 5,
+      "suspicious_registrations": []
+    },
+    "rf_sweep": {
+      "enabled": false,
+      "freq_start": "24M",
+      "freq_end": "1766M"
+    },
+    "handheld": {
+      "import_dir": "./handheld_imports",
+      "auto_import": false
+    }
+  },
+  "session_db": {
+    "path": "./cyt_sessions.db"
+  },
+  "fusion": {
+    "correlation_window_seconds": 30,
+    "cross_source_multiplier": 1.5,
+    "tpms_wifi_multiplier": 2.0,
+    "drone_repeat_multiplier": 2.0
   }
 }

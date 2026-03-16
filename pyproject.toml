@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+timeout = 30
+addopts = "--tb=short -q"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*", ".venv/*", "legacy/*", "old_scripts/*", "docs_archive/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true

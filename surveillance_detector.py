@@ -65,8 +65,30 @@ class SurveillanceDetector:
         
         self.appearances.append(appearance)
         self.device_history[mac].append(appearance)
-        
-        logger.debug(f"Recorded appearance: {mac} at {location_id}")
+
+    def add_appearance(self, appearance) -> None:
+        """Add a new-style DeviceAppearance (from scanners.base_scanner).
+
+        Supports both the old DeviceAppearance (this module) and new-style
+        DeviceAppearance (scanners.base_scanner) which uses device_id as key.
+        """
+        # Extract device_id — new-style has it directly, old-style uses mac
+        device_id = getattr(appearance, 'device_id', None) or getattr(appearance, 'mac', None)
+        if device_id is None:
+            return
+
+        # Wrap into old-style DeviceAppearance for compatibility with existing scoring
+        old_appearance = DeviceAppearance(
+            mac=getattr(appearance, 'mac', None) or device_id,
+            timestamp=appearance.timestamp,
+            location_id=appearance.location_id,
+            ssids_probed=getattr(appearance, 'ssids_probed', []),
+            signal_strength=getattr(appearance, 'signal_strength', None),
+            device_type=getattr(appearance, 'device_type', None)
+        )
+
+        self.appearances.append(old_appearance)
+        self.device_history[device_id].append(old_appearance)
     
     def analyze_surveillance_patterns(self) -> List[SuspiciousDevice]:
         """Analyze all devices for surveillance patterns"""
@@ -844,16 +866,17 @@ def load_appearances_from_kismet(db_path: str, detector: SurveillanceDetector,
                 
                 # Extract SSIDs from device JSON
                 ssids_probed = []
-                try:
-                    device_data = json.loads(device_json)
-                    dot11_device = device_data.get('dot11.device', {})
-                    if dot11_device:
-                        probe_record = dot11_device.get('dot11.device.last_probed_ssid_record', {})
-                        ssid = probe_record.get('dot11.probedssid.ssid')
-                        if ssid:
-                            ssids_probed = [ssid]
-                except (json.JSONDecodeError, KeyError):
-                    pass
+                if device_json is not None:
+                    try:
+                        device_data = json.loads(device_json)
+                        dot11_device = device_data.get('dot11.device', {})
+                        if dot11_device:
+                            probe_record = dot11_device.get('dot11.device.last_probed_ssid_record', {})
+                            ssid = probe_record.get('dot11.probedssid.ssid')
+                            if ssid:
+                                ssids_probed = [ssid]
+                    except (json.JSONDecodeError, KeyError):
+                        pass
                 
                 detector.add_device_appearance(
                     mac=mac,

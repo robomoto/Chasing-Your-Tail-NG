@@ -40,7 +40,7 @@ class InputValidator:
         if len(ssid) == 0 or len(ssid) > 32:
             return False
         # Check for null bytes and control characters
-        if '\x00' in ssid or any(ord(c) < 32 and c not in '\t\n\r' for c in ssid):
+        if '\x00' in ssid or any((ord(c) < 32 or ord(c) == 127) and c not in '\t\n\r' for c in ssid):
             return False
         # Check for dangerous characters
         if any(char in ssid for char in cls.DANGEROUS_CHARS):
@@ -100,13 +100,12 @@ class InputValidator:
         for char in cls.DANGEROUS_CHARS:
             sanitized = sanitized.replace(char, '')
         
-        # Check for SQL injection attempts
-        upper_sanitized = sanitized.upper()
+        # Check for SQL injection attempts (whole-word matching only)
         for keyword in cls.SQL_KEYWORDS:
-            if keyword in upper_sanitized:
+            pattern = re.compile(r'\b' + keyword + r'\b', re.IGNORECASE)
+            if pattern.search(sanitized):
                 logger.warning(f"Potential SQL injection attempt: {sanitized}")
-                sanitized = sanitized.replace(keyword, '')
-                sanitized = sanitized.replace(keyword.lower(), '')
+                sanitized = pattern.sub('', sanitized)
         
         return sanitized.strip()
     
