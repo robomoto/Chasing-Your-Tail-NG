@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+cyt_security.log
+*.kismet
+secure_credentials/encrypted_credentials.json
+secure_credentials/.encryption_key

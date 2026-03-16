@@ -29,7 +29,7 @@ This project has been security-hardened to eliminate critical vulnerabilities:
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.9+ (3.11 recommended)
 - Kismet wireless packet capture
 - Wi-Fi adapter supporting monitor mode
 - Linux-based system
