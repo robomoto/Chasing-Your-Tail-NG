@@ -17,6 +17,12 @@ Planning documentation for Chasing Your Tail - Next Generation development.
 - [Firmware Architecture](esp32-port/firmware-architecture.md) - Task model, memory layout, data flow
 - [Feature Parity Matrix](esp32-port/feature-parity.md) - What ports, what doesn't, what changes
 
+### Specialist Reviews
+- [UI Design Review](reviews/ui-review.md) - Dashboard layouts, handheld screens, color system, discreet alerts
+- [UX Design Review](reviews/ux-review.md) - User personas, critical flows, onboarding, alert fatigue, safety
+- [DataViz Review](reviews/dataviz-review.md) - Dashboard charts, map strategy, RF spectrum plots, report generation
+- [Social Psychology Review](reviews/social-psych-review.md) - Psychological impact, dual-use, alert language, ethical framework
+
 ### Spectrum Expansion
 - [Spectrum Roadmap](spectrum-expansion/roadmap.md) - Priority-ordered plan for adding BLE, sub-GHz, LoRa, drones, aircraft, RF sweep
 - [BLE Tracker Detection](spectrum-expansion/ble-trackers.md) - AirTag/SmartTag/Tile detection design
